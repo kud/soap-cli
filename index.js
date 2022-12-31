@@ -58,6 +58,7 @@ try {
     },
     {
       type: "confirm",
+      when: isCask,
       name: "deletedCaskWish",
       message: `Do you want to uninstall "${param}" via homebrew?`,
     },
