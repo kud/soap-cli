@@ -46,9 +46,7 @@ It will delete for instance this kind of files:
 /Users/kud/Library/Logs/google/AndroidStudio4.2
 ```
 
-## Warning
-
-Even if soap is quite simple, tries to be really user-friendly and displays everything it will remove and ask you first what to delete, I'm not responsible of the deletion. There's no rollback available. Use it as your own risks.
+No worries, soap will move them into your Trash, so if something wrong has happened, you can check there your files.
 
 ## Credits
 

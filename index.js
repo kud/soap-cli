@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import inquirer from "inquirer"
 import signale from "signale"
-import { deleteAsync } from "del"
+import trash from "trash"
 import chalk from "chalk"
 import { $ } from "zx/core"
 $.verbose = false // true for debugging
@@ -65,7 +65,7 @@ try {
   ])
 
   if (!isAppFilesEmpty) {
-    const deletedPaths = await deleteAsync(deletedFilesWish, { force: true })
+    const deletedPaths = await trash(deletedFilesWish, { force: true })
 
     console.log("")
 
