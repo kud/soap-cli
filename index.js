@@ -14,6 +14,13 @@ import {
 } from "./lib/index.js"
 
 const [param] = process.argv.slice(2)
+
+if (!param) {
+  console.error(`No parameter specified.`)
+
+  process.exit(0)
+}
+
 const isCask = !param.includes(".app")
 
 console.log(
