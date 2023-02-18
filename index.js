@@ -50,7 +50,7 @@ try {
 
   console.log("")
 
-  const { deletedFilesWish, isConfirmed } = await inquirer.prompt([
+  const { deletedFilesWish } = await inquirer.prompt([
     {
       type: "checkbox",
       name: "deletedFilesWish",
@@ -72,12 +72,12 @@ try {
   ])
 
   if (!isAppFilesEmpty) {
-    const deletedPaths = await trash(deletedFilesWish, { force: true })
+    await trash(deletedFilesWish, { force: true })
 
     console.log("")
 
     console.log("Files deleted:")
-    deletedPaths.forEach((deletedPath) => console.log(`· ${deletedPath}`))
+    deletedFilesWish.forEach((deletedPath) => console.log(`· ${deletedPath}`))
   }
 
   if (isCask) {
