@@ -4,7 +4,6 @@ import signale from "signale"
 import trash from "trash"
 import chalk from "chalk"
 import { $ } from "zx/core"
-$.verbose = false // true for debugging
 
 import {
   appNameFromPath,
@@ -12,6 +11,8 @@ import {
   getBundleIdentifier,
   findAppFiles,
 } from "./lib/index.js"
+
+$.verbose = false // true for debugging
 
 const [param] = process.argv.slice(2)
 
@@ -94,4 +95,25 @@ try {
 } catch (error) {
   signale.error(`Something wrong appeared. Check the log below.\n`)
   console.error(error)
+  console.error("")
+
+  if (isCask) {
+    inquirer
+      .prompt([
+        {
+          type: "confirm",
+          name: "forceUninstall",
+          message:
+            "An error occurred. It could happen when the app file no longer exists, but the cask is still present in Homebrew.\nWould you like to forcefully uninstall the cask by running `brew uninstall`?",
+        },
+      ])
+      .then(async (answers) => {
+        if (answers.forceUninstall) {
+          console.error("")
+          signale.pending(`Forcefully uninstalling cask.`)
+          await $`brew uninstall --force ${param}`
+          signale.success("Force uninstallation successful.")
+        }
+      })
+  }
 }
