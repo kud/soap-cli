@@ -11,7 +11,7 @@ I used to use AppCleaner and [App Eraser](https://github.com/davunt/app-eraser) 
 ## Install
 
 ```shell
-npm install -g @kud/soap
+npm install -g @kud/soap-cli
 ```
 
 ## Usage

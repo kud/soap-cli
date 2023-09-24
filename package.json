@@ -1,9 +1,11 @@
 {
-  "name": "@kud/soap",
+  "name": "@kud/soap-cli",
   "version": "1.0.0-4",
   "description": "An app cleaner cli for macOS",
   "main": "index.js",
-  "bin": "index.js",
+  "bin": {
+    "soap": "index.js"
+  },
   "directories": {
     "lib": "lib"
   },
@@ -13,15 +15,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/kud/soap.git"
+    "url": "git+https://github.com/kud/soap-cli.git"
   },
   "keywords": [],
   "author": "Erwann Mest <m@kud.io>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/kud/soap/issues"
+    "url": "https://github.com/kud/soap-cli/issues"
   },
-  "homepage": "https://github.com/kud/soap#readme",
+  "homepage": "https://github.com/kud/soap-cli#readme",
   "type": "module",
   "dependencies": {
     "chalk": "5.3.0",
@@ -30,5 +32,6 @@
     "signale": "1.4.0",
     "trash": "8.1.1",
     "zx": "7.2.3"
-  }
+  },
+  "devDependencies": {}
 }
