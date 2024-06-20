@@ -32,6 +32,7 @@ try {
   const appName = isCask
     ? await appNameFromCaskName(param)
     : appNameFromPath(param)
+
   const bundleId = await getBundleIdentifier(appName)
   const _appFiles = await findAppFiles(appName, bundleId)
   const appFiles = isCask ? _appFiles.slice(1) : _appFiles
