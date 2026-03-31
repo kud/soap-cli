@@ -3,62 +3,97 @@ import inquirer from "inquirer"
 import signale from "signale"
 import trash from "trash"
 import chalk from "chalk"
-import { $ } from "zx/core"
+import { $, spinner } from "zx"
 
 import {
   appNameFromPath,
-  appNameFromCaskName,
+  getCaskInfo,
   getBundleIdentifier,
   findAppFiles,
 } from "./lib/index.js"
 
-$.verbose = false // true for debugging
+$.verbose = process.env.SOAP_DEBUG === "1"
 
 const [param] = process.argv.slice(2)
 
-if (!param) {
-  console.error(`No parameter specified.`)
+if (!param || param === "--help" || param === "-h") {
+  if (param === "--help" || param === "-h") {
+    console.log(`
+  ${chalk.bold("soap")} 🧼  ${chalk.italic("the app cleaner")}
 
-  process.exit(0)
+  ${chalk.bold("Usage:")}
+    soap ${chalk.cyan("<cask-name>")} | ${chalk.cyan("<path-to-app>")}
+
+  ${chalk.bold("Examples:")}
+    soap ${chalk.green("spotify")}               Uninstall Spotify (cask) + all its leftover files
+    soap ${chalk.green("android-studio")}        Uninstall Android Studio (cask)
+    soap ${chalk.green("/Applications/Slack.app")}
+                               Uninstall Slack by path (no brew step)
+
+  ${chalk.bold("What it removes:")}
+    ${chalk.dim("·")} The .app bundle ${chalk.dim("(via brew uninstall --zap or manual selection)")}
+    ${chalk.dim("·")} Preferences  ${chalk.dim("~/Library/Preferences/com.<vendor>.<app>.plist")}
+    ${chalk.dim("·")} Caches       ${chalk.dim("~/Library/Caches/com.<vendor>.<app>")}
+    ${chalk.dim("·")} App support  ${chalk.dim("~/Library/Application Support/<App>")}
+    ${chalk.dim("·")} Containers   ${chalk.dim("~/Library/Containers/com.<vendor>.<app>")}
+    ${chalk.dim("·")} Launch agents, logs, crash reports, DMG files, and more
+
+  ${chalk.bold("Environment:")}
+    ${chalk.yellow("SOAP_DEBUG=1")}               Enable verbose shell output
+    `)
+    process.exit(0)
+  }
+  console.error(
+    chalk.red("No parameter specified. Run `soap --help` for usage."),
+  )
+  process.exit(1)
 }
 
 const isCask = !param.includes(".app")
 
 console.log(
-  `Welcome to ${chalk.bold("soap")} 🧼, ${chalk.italic("the app cleaner")}.\n`,
+  `\nWelcome to ${chalk.bold("soap")} 🧼, ${chalk.italic("the app cleaner")}.\n`,
 )
 
 try {
-  const appName = isCask
-    ? await appNameFromCaskName(param)
-    : appNameFromPath(param)
+  const { appName, zapFiles } = isCask
+    ? await spinner(chalk.dim("Fetching cask info…"), () => getCaskInfo(param))
+    : { appName: appNameFromPath(param), zapFiles: [] }
+
+  if (!appName) {
+    signale.error(`Could not determine app name for "${param}".`)
+    process.exit(1)
+  }
 
   const bundleId = await getBundleIdentifier(appName)
-  const _appFiles = await findAppFiles(appName, bundleId)
-  const appFiles = isCask ? _appFiles.slice(1) : _appFiles
-  const isAppFilesEmpty = appFiles.length === 0
 
-  signale.info(
-    `You want me to clean this application: ${chalk.bold(appName)} 📦.`,
+  const scannedFiles = await spinner(chalk.dim("Scanning for files…"), () =>
+    findAppFiles(appName, bundleId),
   )
 
+  const appFiles = [
+    ...new Set([
+      ...(isCask ? scannedFiles.slice(1) : scannedFiles),
+      ...zapFiles,
+    ]),
+  ]
+  const isAppFilesEmpty = appFiles.length === 0
+
+  signale.info(`Cleaning: ${chalk.bold(appName)}`)
   signale.info(
     isCask
-      ? `I also assume ${chalk.bold("you gave me a cask name")}.`
-      : `I also assume you gave me an application path. ${chalk.bold(
-          "No homebrew cask will be deleted then",
-        )}.`,
+      ? `Mode: ${chalk.bold("cask")} (${param})`
+      : `Mode: ${chalk.bold("path")} — no Homebrew uninstall will run`,
   )
 
   console.log("")
 
-  const { deletedFilesWish } = await inquirer.prompt([
+  const { deletedFilesWish, deletedCaskWish } = await inquirer.prompt([
     {
       type: "checkbox",
       name: "deletedFilesWish",
       when: !isAppFilesEmpty,
-      message:
-        "This is what I've found about it. Please select the files you want to delete.",
+      message: `Found ${chalk.bold(appFiles.length)} files. Select what to move to Trash:`,
       choices: appFiles.map((appFile) => ({
         name: appFile,
         value: appFile,
@@ -69,52 +104,56 @@ try {
       type: "confirm",
       when: isCask,
       name: "deletedCaskWish",
-      message: `Do you want to uninstall "${param}" via homebrew?`,
+      message: `Run ${chalk.bold(`brew uninstall --zap ${param}`)}?`,
+      default: true,
     },
   ])
 
-  if (!isAppFilesEmpty) {
+  if (!isAppFilesEmpty && deletedFilesWish?.length > 0) {
     await trash(deletedFilesWish, { force: true })
 
     console.log("")
-
-    console.log("Files deleted:")
-    deletedFilesWish.forEach((deletedPath) => console.log(`· ${deletedPath}`))
+    signale.success(
+      `Moved ${chalk.bold(deletedFilesWish.length)} file(s) to Trash:`,
+    )
+    deletedFilesWish.forEach((p) =>
+      console.log(`  ${chalk.dim("·")} ${chalk.dim(p)}`),
+    )
+  } else if (!isAppFilesEmpty) {
+    signale.info("No files selected — nothing moved to Trash.")
   }
 
-  if (isCask) {
+  if (isCask && deletedCaskWish) {
     console.log("")
-
-    signale.pending(`Starting cask uninstallation.`)
-
-    await $`brew uninstall ${param}`
+    signale.pending("Running Homebrew uninstall…")
+    await $`brew uninstall --zap ${param}`
   }
 
   console.log("")
-
-  signale.success("Operation successful.")
+  signale.success("Done.")
 } catch (error) {
-  signale.error(`Something wrong appeared. Check the log below.\n`)
-  console.error(error)
-  console.error("")
+  console.log("")
+  signale.error(error.message ?? "An unexpected error occurred.")
+
+  if (process.env.SOAP_DEBUG === "1") {
+    console.error(error)
+  }
 
   if (isCask) {
-    inquirer
-      .prompt([
-        {
-          type: "confirm",
-          name: "forceUninstall",
-          message:
-            "An error occurred. It could happen when the app file no longer exists, but the cask is still present in Homebrew.\nWould you like to forcefully uninstall the cask by running `brew uninstall`?",
-        },
-      ])
-      .then(async (answers) => {
-        if (answers.forceUninstall) {
-          console.error("")
-          signale.pending(`Forcefully uninstalling cask.`)
-          await $`brew uninstall --force ${param}`
-          signale.success("Force uninstallation successful.")
-        }
-      })
+    const { forceUninstall } = await inquirer.prompt([
+      {
+        type: "confirm",
+        name: "forceUninstall",
+        message: `The app may already be removed but the cask is still registered.\nForce-run ${chalk.bold(`brew uninstall --zap --force ${param}`)}?`,
+        default: false,
+      },
+    ])
+
+    if (forceUninstall) {
+      console.log("")
+      signale.pending("Force-uninstalling cask…")
+      await $`brew uninstall --zap --force ${param}`
+      signale.success("Force uninstall complete.")
+    }
   }
 }
