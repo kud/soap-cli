@@ -19,7 +19,16 @@
     "type": "git",
     "url": "git+https://github.com/kud/soap-cli.git"
   },
-  "keywords": [],
+  "keywords": [
+    "macos",
+    "app-cleaner",
+    "uninstall",
+    "homebrew",
+    "cask",
+    "cli",
+    "cleanup",
+    "appcleaner"
+  ],
   "author": "Erwann Mest <m@kud.io>",
   "license": "MIT",
   "bugs": {
