@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest"
-import { fileRegex } from "../file-regex.js"
+import { fileRegex } from "../file-regex"
 
-const strip = (str) => {
+const strip = (str: string): string => {
   let result = str
   fileRegex.forEach((r) => (result = result.replace(r, "")))
   return result

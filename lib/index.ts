@@ -4,14 +4,21 @@ $.verbose = false
 import { execSync } from "child_process"
 import fs from "fs/promises"
 import { homedir } from "os"
-import { pathLocations, commonSuffix } from "./path-locations.js"
-import { fileRegex } from "./file-regex.js"
+import { pathLocations, commonSuffix } from "./path-locations"
+import { fileRegex } from "./file-regex"
+
+interface CaskData {
+  artifacts: Array<{
+    app?: string[]
+    zap?: Array<{ trash?: string[] }>
+  }>
+}
 
 const scoreThreshold = 0.4
 
 let compNameGlob = ""
 
-function stripString(file) {
+const stripString = (file: string): string => {
   let transformedString = file
   fileRegex.forEach((regex1) => {
     transformedString = transformedString.replace(regex1, "")
@@ -27,10 +34,13 @@ function stripString(file) {
   return transformedString
 }
 
-export const normalizeString = (str, spacer = "") =>
+export const normalizeString = (str: string, spacer = ""): string =>
   str.toLowerCase().replace(/ /g, spacer)
 
-async function getFilePatternArray(appName, bundleId) {
+const getFilePatternArray = async (
+  appName: string,
+  bundleId: string,
+): Promise<(string | string[])[]> => {
   const nameVariations = createNameVariations(appName, bundleId)
   const appNameNorm = normalizeString(appName)
   const bundleIdNorm = normalizeString(bundleId)
@@ -50,7 +60,7 @@ async function getFilePatternArray(appName, bundleId) {
     )
   }
 
-  const appWithSuffix = new Set([])
+  const appWithSuffix = new Set<string>([])
   commonSuffix.forEach((suffix) =>
     nameVariations.forEach((nameVariation) =>
       appWithSuffix.add(`${nameVariation}${suffix}`),
@@ -62,7 +72,10 @@ async function getFilePatternArray(appName, bundleId) {
   return patternArray
 }
 
-export function isPatternInFile(patterns, fileToCheck) {
+export const isPatternInFile = (
+  patterns: (string | string[])[],
+  fileToCheck: string,
+): string | undefined => {
   return patterns.find((filePatten) => {
     if (typeof filePatten !== "string") return false
     if (fileToCheck.includes(filePatten)) {
@@ -75,8 +88,8 @@ export function isPatternInFile(patterns, fileToCheck) {
           i += indexOfString + filePatten.length
           score += filePatten.length
         }
-        if (strippedFile[parseInt(i, 10)] === ".") score += 0.5
-        if (strippedFile[parseInt(i, 10)] === "_") score += 0.5
+        if (strippedFile[parseInt(i.toString(), 10)] === ".") score += 0.5
+        if (strippedFile[parseInt(i.toString(), 10)] === "_") score += 0.5
       }
       if (score / strippedFile.length > scoreThreshold) {
         return true
@@ -84,10 +97,13 @@ export function isPatternInFile(patterns, fileToCheck) {
       return false
     }
     return false
-  })
+  }) as string | undefined
 }
 
-export function createNameVariations(appName, bundleId) {
+export const createNameVariations = (
+  appName: string,
+  bundleId: string,
+): string[] => {
   const appNameNorm = appName.toLowerCase().replace(/ /g, "")
   const appNameWithoutDot = appNameNorm.replace(/\./g, "")
   const appNameUnderscore = appName.toLowerCase().replace(/ /g, "_")
@@ -105,31 +121,31 @@ export function createNameVariations(appName, bundleId) {
   ]
 }
 
-export function appNameFromPath(appPath) {
+export const appNameFromPath = (appPath: string): string => {
   const pathArr = appPath.split("/")
   const appNameWithExt = pathArr[pathArr.length - 1]
   return appNameWithExt.replace(".app", "")
 }
 
-async function fetchCaskData(caskName) {
+const fetchCaskData = async (caskName: string): Promise<CaskData> => {
   const { stdout: info } = await $`brew info ${caskName} --json=v2`
   const caskData = JSON.parse(info).casks?.[0]
   if (!caskData) throw new Error(`Cask "${caskName}" not found.`)
   return caskData
 }
 
-async function resolveZapPaths(caskData) {
+const resolveZapPaths = async (caskData: CaskData): Promise<string[]> => {
   const zapPaths = caskData.artifacts
     .filter((a) => a.zap)
     .flatMap((a) => a.zap)
-    .filter((entry) => entry.trash)
-    .flatMap((entry) => entry.trash)
+    .filter((entry) => entry?.trash)
+    .flatMap((entry) => entry?.trash ?? [])
     .map((p) => p.replace(/^~/, homedir()))
 
   const resolved = await Promise.all(
     zapPaths.map(async (p) => {
       if (p.includes("*")) {
-        const matches = []
+        const matches: string[] = []
         for await (const f of fs.glob(p)) matches.push(f)
         return matches
       }
@@ -145,11 +161,13 @@ async function resolveZapPaths(caskData) {
   return resolved.flat()
 }
 
-export const getCaskInfo = async (caskName) => {
+export const getCaskInfo = async (
+  caskName: string,
+): Promise<{ appName: string | null; zapFiles: string[] }> => {
   try {
     const caskData = await fetchCaskData(caskName)
 
-    let appName = null
+    let appName: string | null = null
     for (const artifact of caskData.artifacts) {
       if (artifact.app) {
         appName = artifact.app[0]
@@ -160,28 +178,30 @@ export const getCaskInfo = async (caskName) => {
     const zapFiles = await resolveZapPaths(caskData)
 
     return { appName, zapFiles }
-  } catch (error) {
+  } catch (error: unknown) {
     throw new Error(
-      `Failed to get cask info for "${caskName}": ${error.message}`,
+      `Failed to get cask info for "${caskName}": ${error instanceof Error ? error.message : String(error)}`,
     )
   }
 }
 
-export const appNameFromCaskName = async (caskName) => {
+export const appNameFromCaskName = async (
+  caskName: string,
+): Promise<string | null> => {
   const { appName } = await getCaskInfo(caskName)
   return appName
 }
 
-export const getZapFiles = async (caskName) => {
+export const getZapFiles = async (caskName: string): Promise<string[]> => {
   const { zapFiles } = await getCaskInfo(caskName)
   return zapFiles
 }
 
-function getComputerName() {
+const getComputerName = (): string => {
   return execSync("scutil --get ComputerName").toString().trimEnd()
 }
 
-export async function getBundleIdentifier(appName) {
+export const getBundleIdentifier = async (appName: string): Promise<string> => {
   try {
     const bundleId = execSync(
       `osascript -e 'id of app "${appName}"'`,
@@ -194,7 +214,10 @@ export async function getBundleIdentifier(appName) {
   }
 }
 
-export async function findAppFiles(appName, bundleId) {
+export const findAppFiles = async (
+  appName: string,
+  bundleId: string,
+): Promise<string[]> => {
   try {
     compNameGlob = getComputerName()
     const bundleIdComponents = bundleId.split(".")
@@ -210,7 +233,7 @@ export async function findAppFiles(appName, bundleId) {
 
     const patternArray = await getFilePatternArray(appName, bundleId)
 
-    const filesToRemove = new Set([])
+    const filesToRemove = new Set<string>([])
 
     directoryFiles.forEach((dir, index) => {
       if (dir.status === "fulfilled") {
@@ -218,7 +241,7 @@ export async function findAppFiles(appName, bundleId) {
           const dirFileNorm = dirFile.toLowerCase().replace(/ /g, "")
           if (isPatternInFile(patternArray, dirFileNorm)) {
             filesToRemove.add(
-              `${pathsToSearch[parseInt(index, 10)]}/${dirFile}`,
+              `${pathsToSearch[parseInt(index.toString(), 10)]}/${dirFile}`,
             )
           }
         })

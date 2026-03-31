@@ -19,4 +19,9 @@ const commonExtensions = [
   ".diag",
 ]
 
-export const fileRegex = [uuidReg, dateReg, diagReg, ...commonExtensions]
+export const fileRegex: (RegExp | string)[] = [
+  uuidReg,
+  dateReg,
+  diagReg,
+  ...commonExtensions,
+]

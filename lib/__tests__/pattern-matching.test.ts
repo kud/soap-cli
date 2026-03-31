@@ -1,8 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest"
-import { isPatternInFile } from "../index.js"
-
-// isPatternInFile relies on the module-level compNameGlob for stripString.
-// We test it with patterns and filenames where the computer name is irrelevant.
+import { describe, it, expect } from "vitest"
+import { isPatternInFile } from "../index"
 
 describe("isPatternInFile", () => {
   it("matches when pattern is prominent in the filename", () => {
@@ -19,7 +16,6 @@ describe("isPatternInFile", () => {
   })
 
   it("does not match when pattern is a minor substring of a long unrelated filename", () => {
-    // 'it' is a substring of 'microsoft' but far too short relative to the full filename
     const result = isPatternInFile(
       ["it"],
       "com.microsoft.office.reminders.plist",
