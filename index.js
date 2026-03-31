@@ -16,7 +16,24 @@ $.verbose = process.env.SOAP_DEBUG === "1"
 
 const [param] = process.argv.slice(2)
 
-if (!param || param === "--help" || param === "-h") {
+const isFlag = param?.startsWith("-")
+
+if (
+  !param ||
+  param === "--help" ||
+  param === "-h" ||
+  param === "--version" ||
+  param === "-v" ||
+  (isFlag && param !== "--help" && param !== "-h")
+) {
+  if (param === "--version" || param === "-v") {
+    const { createRequire } = await import("module")
+    const require = createRequire(import.meta.url)
+    const { version } = require("./package.json")
+    console.log(`soap v${version}`)
+    process.exit(0)
+  }
+
   if (param === "--help" || param === "-h") {
     console.log(`
   ${chalk.bold("soap")} 🧼  ${chalk.italic("the app cleaner")}
@@ -43,9 +60,15 @@ if (!param || param === "--help" || param === "-h") {
     `)
     process.exit(0)
   }
-  console.error(
-    chalk.red("No parameter specified. Run `soap --help` for usage."),
-  )
+  if (isFlag) {
+    console.error(
+      chalk.red(`Unknown option: ${param}. Run \`soap --help\` for usage.`),
+    )
+  } else {
+    console.error(
+      chalk.red("No parameter specified. Run `soap --help` for usage."),
+    )
+  }
   process.exit(1)
 }
 
