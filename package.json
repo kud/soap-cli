@@ -1,6 +1,6 @@
 {
   "name": "@kud/soap-cli",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "An app cleaner cli for macOS",
   "main": "index.js",
   "bin": {
