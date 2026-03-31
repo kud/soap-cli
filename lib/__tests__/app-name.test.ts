@@ -3,7 +3,7 @@ import {
   appNameFromPath,
   createNameVariations,
   normalizeString,
-} from "../index.js"
+} from "../index"
 
 describe("appNameFromPath", () => {
   it("extracts name from full path", () => {

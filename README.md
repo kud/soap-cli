@@ -130,6 +130,23 @@ Enables verbose shell output — shows every subprocess command that runs.
 
 ---
 
+## Contributing
+
+Built with TypeScript + ESM. Requires Node 20+.
+
+```sh
+git clone https://github.com/kud/soap-cli.git
+cd soap-cli
+npm install
+
+npm run dev        # run from source via tsx
+npm run build      # compile to dist/
+npm run typecheck  # type-check without emitting
+npm test           # vitest unit tests
+```
+
+---
+
 ## Credits
 
 Inspired by [App Eraser](https://github.com/davunt/app-eraser) and [AppCleaner](https://freemacsoft.net/appcleaner/).

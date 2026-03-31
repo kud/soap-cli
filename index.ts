@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 import inquirer from "inquirer"
 import signale from "signale"
 import trash from "trash"
@@ -10,7 +9,7 @@ import {
   getCaskInfo,
   getBundleIdentifier,
   findAppFiles,
-} from "./lib/index.js"
+} from "./lib/index"
 
 $.verbose = process.env.SOAP_DEBUG === "1"
 
@@ -111,7 +110,10 @@ try {
 
   console.log("")
 
-  const { deletedFilesWish, deletedCaskWish } = await inquirer.prompt([
+  const { deletedFilesWish, deletedCaskWish } = await inquirer.prompt<{
+    deletedFilesWish?: string[]
+    deletedCaskWish?: boolean
+  }>([
     {
       type: "checkbox",
       name: "deletedFilesWish",
@@ -132,8 +134,8 @@ try {
     },
   ])
 
-  if (!isAppFilesEmpty && deletedFilesWish?.length > 0) {
-    await trash(deletedFilesWish, { force: true })
+  if (!isAppFilesEmpty && deletedFilesWish && deletedFilesWish.length > 0) {
+    await trash(deletedFilesWish)
 
     console.log("")
     signale.success(
@@ -154,9 +156,11 @@ try {
 
   console.log("")
   signale.success("Done.")
-} catch (error) {
+} catch (error: unknown) {
   console.log("")
-  signale.error(error.message ?? "An unexpected error occurred.")
+  signale.error(
+    error instanceof Error ? error.message : "An unexpected error occurred.",
+  )
 
   if (process.env.SOAP_DEBUG === "1") {
     console.error(error)
