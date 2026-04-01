@@ -174,6 +174,26 @@ try {
   }
 
   if (isCask && deletedCaskWish) {
+    const isAdmin = (await $`id -Gn`).stdout.trim().split(" ").includes("admin")
+
+    if (!isAdmin && !yes) {
+      const { ready } = await inquirer.prompt([
+        {
+          type: "confirm",
+          name: "ready",
+          message: `This step requires admin rights and you don't appear to have them.\nCan you become an admin before we proceed?`,
+          default: false,
+        },
+      ])
+
+      if (!ready) {
+        signale.info("Skipped Homebrew uninstall.")
+        console.log("")
+        signale.success("Done.")
+        process.exit(0)
+      }
+    }
+
     console.log("")
     signale.pending("Running Homebrew uninstall…")
     await $`brew uninstall --zap ${param}`
@@ -182,16 +202,19 @@ try {
   console.log("")
   signale.success("Done.")
 } catch (error: unknown) {
+  const message =
+    error instanceof Error ? error.message : "An unexpected error occurred."
+  const isPermissionError =
+    message.includes("sudoers") || message.includes("Permission denied")
+
   console.log("")
-  signale.error(
-    error instanceof Error ? error.message : "An unexpected error occurred.",
-  )
+  signale.error(message)
 
   if (process.env.SOAP_DEBUG === "1") {
     console.error(error)
   }
 
-  if (isCask) {
+  if (isCask && !isPermissionError) {
     const { forceUninstall } = await inquirer.prompt([
       {
         type: "confirm",
@@ -207,5 +230,9 @@ try {
       await $`brew uninstall --zap --force ${param}`
       signale.success("Force uninstall complete.")
     }
+  } else if (isCask && isPermissionError) {
+    signale.info(
+      "Re-run with an admin account to complete the Homebrew uninstall.",
+    )
   }
 }
