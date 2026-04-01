@@ -19,6 +19,7 @@ const rawArgs = process.argv.slice(2)
 const firstArg = rawArgs[0]
 const param = rawArgs.find((a) => !a.startsWith("-"))
 const yes = rawArgs.includes("--yes") || rawArgs.includes("-y")
+const yesDangerously = rawArgs.includes("--yes-dangerously")
 
 if (firstArg === "--version" || firstArg === "-v") {
   console.log(__SOAP_VERSION__)
@@ -50,6 +51,7 @@ if (!firstArg || firstArg === "--help" || firstArg === "-h") {
 
   ${chalk.bold("Flags:")}
     ${chalk.cyan("--yes")}, ${chalk.cyan("-y")}                  Skip all prompts (auto-select all files, auto-confirm brew uninstall)
+    ${chalk.cyan("--yes-dangerously")}           Like --yes, but also auto-confirms sudo rm for root-owned files
 
   ${chalk.bold("Environment:")}
     ${chalk.yellow("SOAP_DEBUG=1")}               Enable verbose shell output
@@ -169,7 +171,7 @@ try {
       )
       skipped.forEach((p) => console.log(`  ${chalk.dim("·")} ${chalk.dim(p)}`))
 
-      const { sudoDelete } = yes
+      const { sudoDelete } = yesDangerously
         ? { sudoDelete: true }
         : await inquirer.prompt([
             {
