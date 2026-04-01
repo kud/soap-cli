@@ -8,6 +8,7 @@ import { pathLocations, commonSuffix } from "./path-locations"
 import { fileRegex } from "./file-regex"
 
 interface CaskData {
+  token: string
   artifacts: Array<{
     app?: string[]
     zap?: Array<{ trash?: string[] }>
@@ -163,9 +164,15 @@ const resolveZapPaths = async (caskData: CaskData): Promise<string[]> => {
 
 export const getCaskInfo = async (
   caskName: string,
-): Promise<{ appName: string | null; zapFiles: string[] }> => {
+): Promise<{
+  appName: string | null
+  zapFiles: string[]
+  renamedTo: string | null
+}> => {
   try {
     const caskData = await fetchCaskData(caskName)
+
+    const renamedTo = caskData.token !== caskName ? caskData.token : null
 
     let appName: string | null = null
     for (const artifact of caskData.artifacts) {
@@ -178,7 +185,7 @@ export const getCaskInfo = async (
 
     const zapFiles = await resolveZapPaths(caskData)
 
-    return { appName, zapFiles }
+    return { appName, zapFiles, renamedTo }
   } catch (error: unknown) {
     throw new Error(
       `Failed to get cask info for "${caskName}": ${error instanceof Error ? error.message : String(error)}`,

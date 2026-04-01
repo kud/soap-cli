@@ -79,9 +79,15 @@ if (!yes)
   )
 
 try {
-  const { appName, zapFiles } = isCask
+  const { appName, zapFiles, renamedTo } = isCask
     ? await spinner(chalk.dim("Fetching cask info…"), () => getCaskInfo(param))
-    : { appName: appNameFromPath(param), zapFiles: [] }
+    : { appName: appNameFromPath(param), zapFiles: [], renamedTo: null }
+
+  if (renamedTo) {
+    signale.warn(
+      `Cask "${param}" has been renamed to "${chalk.bold(renamedTo)}". Files will be cleaned using the new name.`,
+    )
+  }
 
   if (!appName) {
     if (isCask) {
