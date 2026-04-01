@@ -143,15 +143,32 @@ try {
       ])
 
   if (!isAppFilesEmpty && deletedFilesWish && deletedFilesWish.length > 0) {
-    await trash(deletedFilesWish)
+    const skipped: string[] = []
+    const moved: string[] = []
+
+    for (const file of deletedFilesWish) {
+      try {
+        await trash(file)
+        moved.push(file)
+      } catch {
+        skipped.push(file)
+      }
+    }
 
     console.log("")
-    signale.success(
-      `Moved ${chalk.bold(deletedFilesWish.length)} file(s) to Trash:`,
-    )
-    deletedFilesWish.forEach((p) =>
-      console.log(`  ${chalk.dim("·")} ${chalk.dim(p)}`),
-    )
+
+    if (moved.length > 0) {
+      signale.success(`Moved ${chalk.bold(moved.length)} file(s) to Trash:`)
+      moved.forEach((p) => console.log(`  ${chalk.dim("·")} ${chalk.dim(p)}`))
+    }
+
+    if (skipped.length > 0) {
+      console.log("")
+      signale.warn(
+        `Skipped ${chalk.bold(skipped.length)} file(s) — no permission (may require sudo):`,
+      )
+      skipped.forEach((p) => console.log(`  ${chalk.dim("·")} ${chalk.dim(p)}`))
+    }
   } else if (!isAppFilesEmpty) {
     signale.info("No files selected — nothing moved to Trash.")
   }
