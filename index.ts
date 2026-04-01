@@ -1,3 +1,4 @@
+import fs from "fs/promises"
 import inquirer from "inquirer"
 import signale from "signale"
 import trash from "trash"
@@ -228,6 +229,18 @@ try {
     console.log("")
     signale.pending("Running Homebrew uninstall…")
     await $`brew uninstall --zap ${param}`
+
+    const brewPrefix = (await $`brew --prefix`).stdout.trim()
+    const caskroomEntry = `${brewPrefix}/Caskroom/${param}`
+    try {
+      await fs.access(caskroomEntry)
+      await trash(caskroomEntry)
+      signale.success(
+        `Removed leftover Caskroom entry: ${chalk.dim(caskroomEntry)}`,
+      )
+    } catch {
+      // entry already gone — nothing to do
+    }
   }
 
   console.log("")
