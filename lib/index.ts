@@ -170,7 +170,8 @@ export const getCaskInfo = async (
     let appName: string | null = null
     for (const artifact of caskData.artifacts) {
       if (artifact.app) {
-        appName = artifact.app[0] || null
+        const raw = artifact.app[0] || null
+        appName = raw ? raw.replace(/\.app$/i, "") : null
         break
       }
     }
