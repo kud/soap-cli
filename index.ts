@@ -165,9 +165,32 @@ try {
     if (skipped.length > 0) {
       console.log("")
       signale.warn(
-        `Skipped ${chalk.bold(skipped.length)} file(s) — no permission (may require sudo):`,
+        `${chalk.bold(skipped.length)} file(s) require root — could not move to Trash:`,
       )
       skipped.forEach((p) => console.log(`  ${chalk.dim("·")} ${chalk.dim(p)}`))
+
+      const { sudoDelete } = yes
+        ? { sudoDelete: true }
+        : await inquirer.prompt([
+            {
+              type: "confirm",
+              name: "sudoDelete",
+              message: `Run ${chalk.bold("sudo rm")} on these files?`,
+              default: false,
+            },
+          ])
+
+      if (sudoDelete) {
+        console.log("")
+        for (const file of skipped) {
+          try {
+            await $`sudo rm -rf ${file}`
+            signale.success(`Deleted: ${chalk.dim(file)}`)
+          } catch {
+            signale.error(`Failed to delete: ${chalk.dim(file)}`)
+          }
+        }
+      }
     }
   } else if (!isAppFilesEmpty) {
     signale.info("No files selected — nothing moved to Trash.")
@@ -206,6 +229,7 @@ try {
     error instanceof Error ? error.message : "An unexpected error occurred."
   const isPermissionError =
     message.includes("sudoers") || message.includes("Permission denied")
+  const isCaskNotInstalled = message.includes("is not installed")
 
   console.log("")
   signale.error(message)
@@ -214,7 +238,7 @@ try {
     console.error(error)
   }
 
-  if (isCask && !isPermissionError) {
+  if (isCask && !isPermissionError && !isCaskNotInstalled) {
     const { forceUninstall } = await inquirer.prompt([
       {
         type: "confirm",
@@ -233,6 +257,10 @@ try {
   } else if (isCask && isPermissionError) {
     signale.info(
       "Re-run with an admin account to complete the Homebrew uninstall.",
+    )
+  } else if (isCask && isCaskNotInstalled) {
+    signale.info(
+      `Cask "${param}" is not registered in Homebrew — skipping brew uninstall.`,
     )
   }
 }
