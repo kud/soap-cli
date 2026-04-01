@@ -211,9 +211,9 @@ const getComputerName = (): string => {
 
 export const getBundleIdentifier = async (appName: string): Promise<string> => {
   try {
-    const bundleId = execSync(
-      `osascript -e 'id of app "${appName}"'`,
-    ).toString()
+    const bundleId = execSync(`osascript -e 'id of app "${appName}"'`, {
+      stdio: "pipe",
+    }).toString()
     return bundleId.trimEnd()
   } catch {
     throw new Error(

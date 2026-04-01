@@ -95,7 +95,7 @@ try {
       signale.warn(
         `Could not determine app name for "${param}", falling back to brew uninstall.`,
       )
-      await $`brew uninstall --zap ${param}`
+      await $({ quiet: true })`brew uninstall --zap ${param}`
       process.exit(0)
     }
     signale.error(`Could not determine app name for "${param}".`)
@@ -235,7 +235,7 @@ try {
 
     console.log("")
     signale.pending("Running Homebrew uninstall…")
-    await $`brew uninstall --zap ${param}`
+    await $({ quiet: true })`brew uninstall --zap ${param}`
 
     const brewPrefix = (await $`brew --prefix`).stdout.trim()
     const caskroomEntry = `${brewPrefix}/Caskroom/${param}`
@@ -253,8 +253,13 @@ try {
   console.log("")
   signale.success("Done.")
 } catch (error: unknown) {
-  const message =
+  const rawMessage =
     error instanceof Error ? error.message : "An unexpected error occurred."
+  const message = rawMessage
+    .split("\n")
+    .filter((l) => !/^\s+at /.test(l) && !/exit code:/.test(l))
+    .join("\n")
+    .trim()
   const isPermissionError =
     message.includes("sudoers") || message.includes("Permission denied")
   const isCaskNotInstalled = message.includes("is not installed")
@@ -279,20 +284,8 @@ try {
     if (forceUninstall) {
       console.log("")
       signale.pending("Force-uninstalling cask…")
-      await $`brew uninstall --zap --force ${param}`
+      await $({ quiet: true })`brew uninstall --zap --force ${param}`
       signale.success("Force uninstall complete.")
-
-      const brewPrefix = (await $`brew --prefix`).stdout.trim()
-      const caskroomEntry = `${brewPrefix}/Caskroom/${param}`
-      try {
-        await fs.access(caskroomEntry)
-        await trash(caskroomEntry)
-        signale.success(
-          `Removed leftover Caskroom entry: ${chalk.dim(caskroomEntry)}`,
-        )
-      } catch {
-        // entry already gone — nothing to do
-      }
     }
   } else if (isCask && isPermissionError) {
     signale.info(
@@ -302,5 +295,19 @@ try {
     signale.info(
       `Cask "${param}" is not registered in Homebrew — skipping brew uninstall.`,
     )
+  }
+
+  if (isCask) {
+    const brewPrefix = (await $`brew --prefix`).stdout.trim()
+    const caskroomEntry = `${brewPrefix}/Caskroom/${param}`
+    try {
+      await fs.access(caskroomEntry)
+      await trash(caskroomEntry)
+      signale.success(
+        `Removed leftover Caskroom entry: ${chalk.dim(caskroomEntry)}`,
+      )
+    } catch {
+      // entry already gone — nothing to do
+    }
   }
 }
