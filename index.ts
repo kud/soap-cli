@@ -13,29 +13,20 @@ import {
 
 $.verbose = process.env.SOAP_DEBUG === "1"
 
+declare const __SOAP_VERSION__: string
+
 const rawArgs = process.argv.slice(2)
+const firstArg = rawArgs[0]
 const param = rawArgs.find((a) => !a.startsWith("-"))
 const yes = rawArgs.includes("--yes") || rawArgs.includes("-y")
 
-const isFlag = param?.startsWith("-")
+if (firstArg === "--version" || firstArg === "-v") {
+  console.log(`soap v${__SOAP_VERSION__}`)
+  process.exit(0)
+}
 
-if (
-  !param ||
-  param === "--help" ||
-  param === "-h" ||
-  param === "--version" ||
-  param === "-v" ||
-  (isFlag && param !== "--help" && param !== "-h")
-) {
-  if (param === "--version" || param === "-v") {
-    const { createRequire } = await import("module")
-    const require = createRequire(import.meta.url)
-    const { version } = require("./package.json")
-    console.log(`soap v${version}`)
-    process.exit(0)
-  }
-
-  if (param === "--help" || param === "-h") {
+if (!firstArg || firstArg === "--help" || firstArg === "-h") {
+  if (firstArg === "--help" || firstArg === "-h") {
     console.log(`
   ${chalk.bold("soap")} 🧼  ${chalk.italic("the app cleaner")}
 
@@ -65,15 +56,16 @@ if (
     `)
     process.exit(0)
   }
-  if (isFlag) {
-    console.error(
-      chalk.red(`Unknown option: ${param}. Run \`soap --help\` for usage.`),
-    )
-  } else {
-    console.error(
-      chalk.red("No parameter specified. Run `soap --help` for usage."),
-    )
-  }
+  console.error(
+    chalk.red("No parameter specified. Run `soap --help` for usage."),
+  )
+  process.exit(1)
+}
+
+if (!param) {
+  console.error(
+    chalk.red(`Unknown option: ${firstArg}. Run \`soap --help\` for usage.`),
+  )
   process.exit(1)
 }
 
