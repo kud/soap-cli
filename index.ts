@@ -13,7 +13,9 @@ import {
 
 $.verbose = process.env.SOAP_DEBUG === "1"
 
-const [param] = process.argv.slice(2)
+const rawArgs = process.argv.slice(2)
+const param = rawArgs.find((a) => !a.startsWith("-"))
+const yes = rawArgs.includes("--yes") || rawArgs.includes("-y")
 
 const isFlag = param?.startsWith("-")
 
@@ -45,6 +47,7 @@ if (
     soap ${chalk.green("android-studio")}        Uninstall Android Studio (cask)
     soap ${chalk.green("/Applications/Slack.app")}
                                Uninstall Slack by path (no brew step)
+    soap ${chalk.green("spotify")} ${chalk.cyan("--yes")}            Non-interactive: move all files + run brew uninstall
 
   ${chalk.bold("What it removes:")}
     ${chalk.dim("·")} The .app bundle ${chalk.dim("(via brew uninstall --zap or manual selection)")}
@@ -53,6 +56,9 @@ if (
     ${chalk.dim("·")} App support  ${chalk.dim("~/Library/Application Support/<App>")}
     ${chalk.dim("·")} Containers   ${chalk.dim("~/Library/Containers/com.<vendor>.<app>")}
     ${chalk.dim("·")} Launch agents, logs, crash reports, DMG files, and more
+
+  ${chalk.bold("Flags:")}
+    ${chalk.cyan("--yes")}, ${chalk.cyan("-y")}                  Skip all prompts (auto-select all files, auto-confirm brew uninstall)
 
   ${chalk.bold("Environment:")}
     ${chalk.yellow("SOAP_DEBUG=1")}               Enable verbose shell output
@@ -73,9 +79,10 @@ if (
 
 const isCask = !param.includes(".app")
 
-console.log(
-  `\nWelcome to ${chalk.bold("soap")} 🧼, ${chalk.italic("the app cleaner")}.\n`,
-)
+if (!yes)
+  console.log(
+    `\nWelcome to ${chalk.bold("soap")} 🧼, ${chalk.italic("the app cleaner")}.\n`,
+  )
 
 try {
   const { appName, zapFiles } = isCask
@@ -117,29 +124,31 @@ try {
 
   console.log("")
 
-  const { deletedFilesWish, deletedCaskWish } = await inquirer.prompt<{
-    deletedFilesWish?: string[]
-    deletedCaskWish?: boolean
-  }>([
-    {
-      type: "checkbox",
-      name: "deletedFilesWish",
-      when: !isAppFilesEmpty,
-      message: `Found ${chalk.bold(appFiles.length)} files. Select what to move to Trash:`,
-      choices: appFiles.map((appFile) => ({
-        name: appFile,
-        value: appFile,
-        checked: true,
-      })),
-    },
-    {
-      type: "confirm",
-      when: isCask,
-      name: "deletedCaskWish",
-      message: `Run ${chalk.bold(`brew uninstall --zap ${param}`)}?`,
-      default: true,
-    },
-  ])
+  const { deletedFilesWish, deletedCaskWish } = yes
+    ? { deletedFilesWish: appFiles, deletedCaskWish: isCask }
+    : await inquirer.prompt<{
+        deletedFilesWish?: string[]
+        deletedCaskWish?: boolean
+      }>([
+        {
+          type: "checkbox",
+          name: "deletedFilesWish",
+          when: !isAppFilesEmpty,
+          message: `Found ${chalk.bold(appFiles.length)} files. Select what to move to Trash:`,
+          choices: appFiles.map((appFile) => ({
+            name: appFile,
+            value: appFile,
+            checked: true,
+          })),
+        },
+        {
+          type: "confirm",
+          when: isCask,
+          name: "deletedCaskWish",
+          message: `Run ${chalk.bold(`brew uninstall --zap ${param}`)}?`,
+          default: true,
+        },
+      ])
 
   if (!isAppFilesEmpty && deletedFilesWish && deletedFilesWish.length > 0) {
     await trash(deletedFilesWish)
