@@ -21,7 +21,7 @@ const param = rawArgs.find((a) => !a.startsWith("-"))
 const yes = rawArgs.includes("--yes") || rawArgs.includes("-y")
 
 if (firstArg === "--version" || firstArg === "-v") {
-  console.log(`soap v${__SOAP_VERSION__}`)
+  console.log(__SOAP_VERSION__)
   process.exit(0)
 }
 
