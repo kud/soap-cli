@@ -83,6 +83,13 @@ try {
     : { appName: appNameFromPath(param), zapFiles: [] }
 
   if (!appName) {
+    if (isCask) {
+      signale.warn(
+        `Could not determine app name for "${param}", falling back to brew uninstall.`,
+      )
+      await $`brew uninstall --zap ${param}`
+      process.exit(0)
+    }
     signale.error(`Could not determine app name for "${param}".`)
     process.exit(1)
   }
