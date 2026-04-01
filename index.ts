@@ -102,11 +102,18 @@ try {
     process.exit(1)
   }
 
-  const bundleId = await getBundleIdentifier(appName)
+  let bundleId = ""
+  try {
+    bundleId = await getBundleIdentifier(appName)
+  } catch {
+    signale.warn(`App "${appName}" is not installed — skipping file scan.`)
+  }
 
-  const scannedFiles = await spinner(chalk.dim("Scanning for files…"), () =>
-    findAppFiles(appName, bundleId),
-  )
+  const scannedFiles = bundleId
+    ? await spinner(chalk.dim("Scanning for files…"), () =>
+        findAppFiles(appName, bundleId),
+      )
+    : []
 
   const appFiles = [
     ...new Set([
@@ -274,6 +281,18 @@ try {
       signale.pending("Force-uninstalling cask…")
       await $`brew uninstall --zap --force ${param}`
       signale.success("Force uninstall complete.")
+
+      const brewPrefix = (await $`brew --prefix`).stdout.trim()
+      const caskroomEntry = `${brewPrefix}/Caskroom/${param}`
+      try {
+        await fs.access(caskroomEntry)
+        await trash(caskroomEntry)
+        signale.success(
+          `Removed leftover Caskroom entry: ${chalk.dim(caskroomEntry)}`,
+        )
+      } catch {
+        // entry already gone — nothing to do
+      }
     }
   } else if (isCask && isPermissionError) {
     signale.info(
