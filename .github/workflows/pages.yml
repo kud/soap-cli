@@ -5,6 +5,8 @@ on:
     branches: [main]
     paths:
       - "docs/**"
+  release:
+    types: [published]
   workflow_dispatch:
 
 permissions:
@@ -27,6 +29,11 @@ jobs:
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
+
+      - name: Inject version
+        run: |
+          VERSION=$(jq -r .version package.json)
+          sed -i "s/__VERSION__/$VERSION/g" docs/index.html
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
