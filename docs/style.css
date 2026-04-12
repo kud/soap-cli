@@ -297,6 +297,10 @@ a:hover {
 .code-block {
   position: relative;
 }
+.code-block code,
+.code-block pre {
+  padding-right: 72px;
+}
 .copy-btn {
   position: absolute;
   top: 10px;
