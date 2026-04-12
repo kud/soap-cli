@@ -34,7 +34,7 @@
   "bugs": {
     "url": "https://github.com/kud/soap-cli/issues"
   },
-  "homepage": "https://github.com/kud/soap-cli#readme",
+  "homepage": "https://kud.github.io/soap-cli",
   "type": "module",
   "files": [
     "dist"
