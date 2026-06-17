@@ -1,5 +1,5 @@
 ---
-title: Usage
+title: ⚡ Usage
 description: soap modes, flags, and examples for cleaning Homebrew casks and manually installed apps.
 ---
 
@@ -10,7 +10,7 @@ soap --help             Show help
 soap --version          Print the installed version
 ```
 
-## Modes
+## 🔀 Modes
 
 soap decides its mode from the argument: a path containing `.app` is treated as
 a manual install, anything else as a Homebrew cask.
@@ -34,7 +34,7 @@ cannot determine an app name, it falls back to `brew uninstall --zap`.
 Same file scan as cask mode, but skips every Homebrew step. Use this for apps
 installed manually from a DMG.
 
-## Examples
+## 📝 Examples
 
 ```sh
 soap spotify
@@ -43,7 +43,7 @@ soap '/Applications/Android Studio.app'
 soap spotify --yes
 ```
 
-## Flags
+## 🚩 Flags
 
 | Flag                | Effect                                                                        |
 | ------------------- | ----------------------------------------------------------------------------- |
@@ -52,7 +52,7 @@ soap spotify --yes
 | `--version`, `-v`   | Print the installed version and exit.                                         |
 | `--help`, `-h`      | Show usage and exit.                                                          |
 
-## Debug mode
+## 🐛 Debug mode
 
 ```sh
 SOAP_DEBUG=1 soap spotify
