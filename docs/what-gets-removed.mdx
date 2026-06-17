@@ -1,5 +1,5 @@
 ---
-title: What gets removed
+title: 🧹 What gets removed
 description: Every macOS location soap scans for leftover files and how it matches them to an app.
 ---
 
@@ -10,7 +10,7 @@ bundle ID. For Homebrew casks, soap also merges in the cask's
 [zap stanza](https://docs.brew.sh/Cask-Cookbook#stanza-zap) — the
 maintainer-curated list of known leftover files.
 
-## Locations scanned
+## 📂 Locations scanned
 
 | Location                            | What's typically there          |
 | ----------------------------------- | ------------------------------- |
@@ -31,7 +31,7 @@ maintainer-curated list of known leftover files.
 | `/Library/Audio/Plug-Ins/HAL`       | Audio drivers                   |
 | `~/Downloads`                       | Leftover `.dmg` files           |
 
-## How removal happens
+## ⚙️ How removal happens
 
 For Homebrew casks, the `.app` bundle is removed by `brew uninstall --zap`
 (or by manual selection if you decline the brew step). For manual installs, the
