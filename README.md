@@ -10,21 +10,13 @@
 
 ---
 
-A macOS CLI that removes an app **and all its leftover files** — preferences, caches, containers, launch agents, and more. Inspired by [AppCleaner](https://freemacsoft.net/appcleaner/) and [App Eraser](https://github.com/davunt/app-eraser), but open-source and terminal-native.
-
-## 🚀 Install
+## Install
 
 ```sh
 npm install -g @kud/soap-cli
 ```
 
-## 📖 Documentation
-
-Full usage, options, and examples live on the docs site:
-
-**→ [kud.io/projects/soap-cli/docs](https://kud.io/projects/soap-cli/docs)**
-
-## 🔧 Development
+## Development
 
 ```sh
 git clone https://github.com/kud/soap-cli.git
@@ -40,3 +32,7 @@ npm test           # vitest unit tests
 ## License
 
 MIT © [kud](https://github.com/kud)
+
+---
+
+📚 **Full documentation → https://kud.io/projects/soap-cli/docs**
