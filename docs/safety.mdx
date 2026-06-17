@@ -1,0 +1,42 @@
+---
+title: Safety
+description: How soap keeps removals reversible — Trash, per-step confirmations, and the root-owned file fallback.
+---
+
+soap is built to be reversible and explicit. Nothing is removed without you
+seeing it first.
+
+## Files go to Trash
+
+Selected files are **moved to Trash**, not permanently deleted. You can recover
+anything from `~/.Trash` until you empty it.
+
+## You confirm every step
+
+- You get a full checkbox list of every file found before anything is removed —
+  deselect anything you want to keep.
+- The Homebrew uninstall is a separate confirmation step from the file removal.
+- If a step needs admin rights you don't have, soap asks before proceeding rather
+  than failing midway.
+
+## Root-owned files
+
+Some files (launch daemons, system caches) are owned by root and cannot be moved
+to Trash. soap lists these separately and asks whether to run `sudo rm` on them.
+
+This is a permanent delete, so it defaults to **No**. To skip the prompt in
+automation, pass `--yes-dangerously` — which auto-confirms the `sudo rm` step.
+Plain `--yes` never deletes root-owned files.
+
+## Force-uninstall fallback
+
+If an app is already gone but the cask is still registered in Homebrew, soap
+offers to force-run `brew uninstall --zap --force`. This fallback also defaults
+to **No**.
+
+## Non-interactive use
+
+`--yes` skips the file and brew-uninstall prompts (auto-selecting all files), but
+still won't touch root-owned files. Use `--yes-dangerously` only when you fully
+trust the scan results, as it removes the last confirmation before a permanent
+delete.

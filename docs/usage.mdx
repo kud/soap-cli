@@ -1,0 +1,62 @@
+---
+title: Usage
+description: soap modes, flags, and examples for cleaning Homebrew casks and manually installed apps.
+---
+
+```
+soap <cask-name>        Clean an app installed via a Homebrew cask
+soap <path-to-app>      Clean a manually installed app
+soap --help             Show help
+soap --version          Print the installed version
+```
+
+## Modes
+
+soap decides its mode from the argument: a path containing `.app` is treated as
+a manual install, anything else as a Homebrew cask.
+
+### Cask mode — `soap spotify`
+
+1. Resolves the `.app` name from `brew info`.
+2. Scans macOS directories for files matching the app name or bundle identifier.
+3. Fetches the cask's
+   [zap stanza](https://docs.brew.sh/Cask-Cookbook#stanza-zap) — the
+   maintainer-curated list of known leftover files.
+4. Presents a checkbox list of everything found, all pre-selected.
+5. Moves selected files to **Trash**.
+6. Optionally runs `brew uninstall --zap` to unregister the cask from Homebrew.
+
+If a cask has been renamed, soap warns you and cleans using the new name. If it
+cannot determine an app name, it falls back to `brew uninstall --zap`.
+
+### Path mode — `soap '/Applications/Slack.app'`
+
+Same file scan as cask mode, but skips every Homebrew step. Use this for apps
+installed manually from a DMG.
+
+## Examples
+
+```sh
+soap spotify
+soap android-studio
+soap '/Applications/Android Studio.app'
+soap spotify --yes
+```
+
+## Flags
+
+| Flag                | Effect                                                                        |
+| ------------------- | ----------------------------------------------------------------------------- |
+| `--yes`, `-y`       | Skip all prompts: auto-select every file and auto-confirm the brew uninstall. |
+| `--yes-dangerously` | Like `--yes`, but also auto-confirms `sudo rm` for root-owned files.          |
+| `--version`, `-v`   | Print the installed version and exit.                                         |
+| `--help`, `-h`      | Show usage and exit.                                                          |
+
+## Debug mode
+
+```sh
+SOAP_DEBUG=1 soap spotify
+```
+
+Enables verbose shell output — soap prints every subprocess command it runs, and
+prints full error objects when something fails.
