@@ -39,6 +39,9 @@
   "files": [
     "dist"
   ],
+  "overrides": {
+    "esbuild": "0.28.1"
+  },
   "dependencies": {
     "chalk": "5.6.2",
     "inquirer": "13.3.2",
